@@ -1,0 +1,358 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ZippyGo — Bike, Auto & Cab</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"><script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+/* Leaflet core CSS inlined so the map works even when external CSS is blocked */
+.leaflet-pane,.leaflet-tile,.leaflet-marker-icon,.leaflet-marker-shadow,.leaflet-tile-container,.leaflet-pane>svg,.leaflet-pane>canvas,.leaflet-zoom-box,.leaflet-image-layer,.leaflet-layer{position:absolute;left:0;top:0}
+.leaflet-container{overflow:hidden;position:relative;outline-offset:1px}
+.leaflet-tile,.leaflet-marker-icon,.leaflet-marker-shadow{-webkit-user-select:none;user-select:none;-webkit-user-drag:none}
+.leaflet-container .leaflet-overlay-pane svg{max-width:none!important;max-height:none!important}
+.leaflet-container .leaflet-marker-pane img,.leaflet-container .leaflet-tile-pane img,.leaflet-container .leaflet-tile{max-width:none!important;max-height:none!important;width:auto;padding:0}
+.leaflet-pane{z-index:400}.leaflet-tile-pane{z-index:200}.leaflet-overlay-pane{z-index:400}.leaflet-shadow-pane{z-index:500}.leaflet-marker-pane{z-index:600}.leaflet-tooltip-pane{z-index:650}.leaflet-popup-pane{z-index:700}
+.leaflet-map-pane canvas{z-index:100}.leaflet-map-pane svg{z-index:200}
+.leaflet-zoom-animated{transform-origin:0 0}
+.leaflet-tile{visibility:hidden;filter:inherit}.leaflet-tile-loaded{visibility:inherit}
+.leaflet-marker-icon,.leaflet-marker-shadow{display:block}
+.leaflet-interactive{cursor:pointer}.leaflet-grab{cursor:grab}.leaflet-dragging .leaflet-grab{cursor:move}
+.leaflet-touch-drag{touch-action:none}.leaflet-touch-zoom{touch-action:pan-x pan-y}.leaflet-touch-drag.leaflet-touch-zoom{touch-action:none}
+.leaflet-zoom-anim .leaflet-zoom-animated{transition:transform .25s cubic-bezier(0,0,.25,1)}
+.leaflet-zoom-anim .leaflet-tile,.leaflet-pan-anim .leaflet-tile{transition:none}
+.leaflet-zoom-anim .leaflet-zoom-hide{visibility:hidden}
+.leaflet-fade-anim .leaflet-tile{will-change:opacity}
+/* road-grid look shown when map tiles cannot load */
+.leaflet-container{background-image:linear-gradient(rgba(128,128,128,.22) 3px,transparent 3px),linear-gradient(90deg,rgba(128,128,128,.22) 3px,transparent 3px),linear-gradient(rgba(128,128,128,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(128,128,128,.12) 1px,transparent 1px);background-size:96px 96px,96px 96px,24px 24px,24px 24px}
+:root{--on:#fff;--bg:#fff;--sf:#f6f6f7;--tx:#111318;--mu:#7a808c;--pr:#ffc800;--pd:#111318;--ok:#12a150;--bd:#ececef;--sh:0 8px 28px rgba(17,19,24,.10);--mp:#e9efe3;--mw:#cfe3f3;--mg:#d6e8c6;--rd:#fff;--fg:#111318;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d0f13;--sf:#181b21;--tx:#f4f5f7;--mu:#98a0ad;--bd:#262a33;--sh:0 8px 28px rgba(0,0,0,.5);--mp:#1c231f;--mw:#1a2b38;--mg:#1f2e1f;--rd:#2c313b}}
+:root[data-theme="dark"]{--bg:#0d0f13;--sf:#181b21;--tx:#f4f5f7;--mu:#98a0ad;--bd:#262a33;--sh:0 8px 28px rgba(0,0,0,.5);--mp:#1c231f;--mw:#1a2b38;--mg:#1f2e1f;--rd:#2c313b}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg)}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{font-family:Poppins,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--tx);max-width:480px;margin:auto;min-height:100vh;position:relative;overflow-x:hidden}
+.scr{display:none;min-height:100vh;animation:fi .35s}.scr.on{display:block}
+@keyframes fi{from{opacity:0;transform:translateY(10px)}}
+@keyframes bl{50%{opacity:.15;transform:scale(.94)}}
+@keyframes pu{0%{transform:scale(.6);opacity:.7}100%{transform:scale(2.4);opacity:0}}
+#splash{display:none;position:fixed;inset:0;z-index:50;background:var(--pr);flex-direction:column;align-items:center;justify-content:center;color:var(--on)}
+#splash.on{display:flex}#splash .lg{font-size:46px;font-weight:800;letter-spacing:-1px;animation:bl .8s infinite}
+.mu{color:var(--mu);font-size:13px}.pd{padding:20px}
+h1{font-size:26px;font-weight:700;line-height:1.25}h2{font-size:18px;font-weight:700}
+.btn{width:100%;border:0;border-radius:16px;padding:16px;font:600 16px Poppins,system-ui;background:var(--pr);color:var(--on);cursor:pointer;margin-top:12px;transition:transform .1s}
+.btn:active{transform:scale(.97)}.btn.dk{background:var(--pd);color:#fff}.btn.gh{background:var(--sf);color:var(--tx)}
+:root[data-theme="dark"] .btn.dk{background:#fff;color:#111}
+.in{width:100%;padding:15px 16px;border:1.5px solid var(--bd);border-radius:14px;background:var(--sf);color:var(--tx);font:500 15px Poppins,system-ui;margin-top:10px;outline:0}.in:focus{border-color:var(--pr)}
+.err{color:#e5484d;font-size:13px;margin-top:8px;min-height:18px}
+.ob{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;height:62vh}.ob::-webkit-scrollbar{display:none}
+.ob>div{flex:0 0 100%;scroll-snap-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px}
+.ob .bg{width:220px;height:220px;border-radius:50%;background:var(--pr);display:flex;align-items:center;justify-content:center;font-size:96px;margin-bottom:28px;box-shadow:0 20px 50px color-mix(in srgb,var(--pr) 35%,transparent)}
+.dots{display:flex;gap:6px;justify-content:center;margin:12px 0}.dots i{width:8px;height:8px;border-radius:9px;background:var(--bd);transition:.3s}.dots i.on{width:24px;background:var(--pr)}
+.map{position:relative;overflow:hidden;background:var(--mp);isolation:isolate}.map::after{content:"© OpenStreetMap © CARTO";position:absolute;right:8px;bottom:34px;font-size:9px;opacity:.6;z-index:1000;color:var(--fg)}.leaflet-control-attribution,.leaflet-control-container{display:none!important}.leaflet-container{background:var(--mp);font-family:Poppins,system-ui}.map svg{width:100%;height:100%;display:block}
+.mk{position:absolute;width:30px;height:30px;border-radius:50%;background:var(--rd);box-shadow:0 3px 10px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;font-size:16px;transition:all 3s linear;transform:translate(-50%,-50%)}
+.pin{position:absolute;transform:translate(-50%,-100%);font-size:28px;filter:drop-shadow(0 3px 3px rgba(0,0,0,.3))}
+.hd{position:absolute;top:12px;left:14px;right:14px;z-index:1001;display:flex;justify-content:space-between;align-items:center}
+.av{width:42px;height:42px;border-radius:50%;background:var(--pd);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:var(--sh)}
+.chip{background:var(--rd);color:var(--fg);border-radius:20px;padding:8px 14px;font-size:13px;font-weight:600;box-shadow:var(--sh)}
+.sheet{position:relative;margin-top:-26px;background:var(--bg);border-radius:28px 28px 0 0;padding:18px 18px 180px;box-shadow:0 -10px 30px rgba(0,0,0,.08);z-index:4}
+.grab{width:40px;height:4px;border-radius:4px;background:var(--bd);margin:0 auto 14px}
+.where{background:var(--sf);border-radius:18px;padding:6px 14px}
+.wr{display:flex;align-items:center;gap:12px;padding:8px 0}.wr+.wr{border-top:1px solid var(--bd)}
+.wr input{flex:1;border:0;background:transparent;color:var(--tx);font:500 15px Poppins,system-ui;outline:0;padding:6px 0;min-width:0}
+.dt{width:10px;height:10px;border-radius:50%;background:var(--ok)}.dt.r{background:#e5484d;border-radius:2px}
+a.gl{color:#2563eb;font-size:12px;font-weight:600;text-decoration:none;white-space:nowrap}
+.sg{padding:11px 4px;border-bottom:1px solid var(--bd);font-size:14px;cursor:pointer;display:flex;gap:10px}
+.svc{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0}
+.svc div{background:var(--sf);border-radius:18px;padding:12px 4px;text-align:center;font-size:12px;font-weight:600;cursor:pointer;border:2px solid transparent;position:relative}
+.svc div.on{border-color:var(--pr);background:color-mix(in srgb,var(--pr) 14%,transparent)}.svc span{display:block;font-size:30px;margin-bottom:2px}
+.svc b{position:absolute;top:-6px;right:-3px;background:var(--ok);color:#fff;border-radius:9px;font-size:10px;padding:1px 6px}
+.sl{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;margin:0 -18px;padding:0 18px}.sl::-webkit-scrollbar{display:none}
+.sl>div{flex:0 0 84%;scroll-snap-align:start;border-radius:20px;padding:18px;color:#111;min-height:118px;position:relative;overflow:hidden}
+.sl>div b{font-size:17px;display:block;max-width:70%;line-height:1.3}.sl>div small{display:block;margin-top:6px;font-size:12px;opacity:.8}.sl>div i{position:absolute;right:12px;bottom:4px;font-size:64px;font-style:normal}
+.sec{display:flex;justify-content:space-between;align-items:baseline;margin:22px 0 10px}
+.pl{display:flex;gap:8px;flex-wrap:wrap}.pl span{background:var(--sf);border-radius:20px;padding:8px 14px;font-size:13px;font-weight:500}
+.rc{background:var(--sf);border-radius:16px;padding:14px;margin-bottom:10px;display:flex;gap:12px;align-items:center}.rc .ic{font-size:28px}
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--bg);border-top:1px solid var(--bd);display:none;z-index:9;padding:8px 10px calc(8px + env(safe-area-inset-bottom,0px))}
+.nav.on{display:flex}.nav div{flex:1;text-align:center;font-size:11px;font-weight:600;color:var(--mu);cursor:pointer}.nav div span{display:block;font-size:22px}.nav div.on{color:var(--tx)}.nav div.on span{filter:none}.nav div:not(.on) span{filter:grayscale(1);opacity:.6}
+.tab{display:none}.tab.on{display:block}
+.bar{display:flex;align-items:center;gap:12px;padding:14px 18px}.bk{width:40px;height:40px;border-radius:50%;background:var(--sf);border:0;font-size:18px;color:var(--tx);cursor:pointer}
+.vc{display:flex;align-items:center;gap:14px;padding:14px;border-radius:18px;border:2px solid transparent;background:var(--sf);margin-bottom:10px;cursor:pointer}
+.vc.on{border-color:var(--pr);background:color-mix(in srgb,var(--pr) 12%,transparent)}.vc .ic{font-size:38px;width:56px;text-align:center}.vc .m{flex:1}.vc b{font-size:15px}.vc .p{text-align:right;font-weight:700;font-size:17px}.vc .p s{display:block;font-size:12px;color:var(--mu);font-weight:400}
+.tg{display:inline-block;background:#e6f6ec;color:var(--ok);font-size:10px;font-weight:700;border-radius:6px;padding:2px 6px;margin-left:6px}
+.fx{position:sticky;bottom:0;background:var(--bg);padding:12px 18px calc(14px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--bd)}
+.pay{display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:600;cursor:pointer;padding:4px 0 8px}
+.fb{font-size:13px;color:var(--mu);padding:6px 0}.fb div{display:flex;justify-content:space-between;padding:3px 0}
+.otp{display:flex;gap:8px;justify-content:center;margin:8px 0}.otp b{width:46px;height:52px;border-radius:12px;background:var(--pr);color:var(--on);font-size:26px;display:flex;align-items:center;justify-content:center}
+.stp{display:flex;gap:6px;margin:14px 0}.stp i{flex:1;height:5px;border-radius:5px;background:var(--bd)}.stp i.on{background:var(--ok)}
+.dr{display:flex;gap:14px;align-items:center}.dr .ph{width:58px;height:58px;border-radius:50%;background:var(--pr);display:flex;align-items:center;justify-content:center;font-size:30px}
+.st{display:flex;gap:6px;justify-content:center;font-size:40px;margin:14px 0}.st span{cursor:pointer;filter:grayscale(1);opacity:.4}.st span.on{filter:none;opacity:1}
+.rad{width:120px;height:120px;border-radius:50%;background:var(--pr);margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:52px;position:relative}.rad::before,.rad::after{content:"";position:absolute;inset:0;border-radius:50%;background:var(--pr);animation:pu 1.8s infinite;z-index:-1}.rad::after{animation-delay:.9s}
+.sk{height:74px;border-radius:18px;background:linear-gradient(90deg,var(--sf),var(--bd),var(--sf));background-size:200% 100%;animation:sh 1.2s infinite;margin-bottom:10px}@keyframes sh{to{background-position:-200% 0}}
+.sp{position:relative;overflow:hidden;border-radius:20px;padding:16px 18px;margin:0 0 18px;background:linear-gradient(135deg,#7c3aed,#2563eb);color:#fff;cursor:pointer;display:flex;align-items:center;gap:14px;box-shadow:0 10px 26px rgba(124,58,237,.4);animation:gw 2s infinite}
+.sp>i{font-size:40px;font-style:normal}.sp b{font-size:16px;display:block}.sp small{font-size:12px;opacity:.9}.sp>div{flex:1}
+.sp em{position:absolute;top:0;right:0;background:#ffc800;color:#111;font-style:normal;font-size:10px;font-weight:800;border-radius:0 20px 0 12px;padding:3px 12px}
+.sp u{background:#fff;color:#4c1d95;font-weight:700;font-size:13px;border-radius:12px;padding:8px 14px;text-decoration:none;white-space:nowrap;margin-top:10px}
+@keyframes gw{50%{box-shadow:0 10px 38px rgba(124,58,237,.8);transform:scale(1.02)}}
+</style></head><body>
+
+<div id="splash" class="on"><div class="lg">⚡ZippyGo</div><p style="margin-top:6px;font-weight:500">Ride anywhere. Fast.</p></div>
+
+<!-- ONBOARDING -->
+<div class="scr" id="onb"><div style="display:flex;justify-content:flex-end;padding:18px"><span class="mu" style="cursor:pointer;font-weight:600" onclick="go('login')">Skip</span></div>
+<div class="ob" id="obs"><div><div class="bg">🏍️</div><h1>Bike taxi in minutes</h1><p class="mu" style="margin-top:8px">Beat the traffic with the fastest rides in the city.</p></div>
+<div><div class="bg">🛺</div><h1>Auto & Cab, your choice</h1><p class="mu" style="margin-top:8px">Economy to premium — pick what fits your trip.</p></div>
+<div><div class="bg">💸</div><h1>Clear, low fares</h1><p class="mu" style="margin-top:8px">See the exact fare before you book. No surprises.</p></div></div>
+<div class="dots" id="od"><i class="on"></i><i></i><i></i></div>
+<div class="pd"><button class="btn" id="obn" onclick="obNext()">Next</button></div></div>
+
+<!-- LOGIN -->
+<div class="scr" id="login"><div class="pd" style="padding-top:50px"><div style="font-size:44px">👋</div><h1 style="margin-top:10px">Let's get you<br>riding</h1><p class="mu" style="margin-top:6px">Create your ZippyGo account</p>
+<input class="in" id="nm" placeholder="Full name"><input class="in" id="em" type="email" placeholder="Email address">
+<div style="display:flex;gap:8px"><input class="in" value="+91" style="width:76px;text-align:center" readonly><input class="in" id="ph" type="tel" inputmode="numeric" maxlength="10" placeholder="Mobile number"></div>
+<div class="err" id="err"></div><button class="btn" onclick="sendOtp()">Login</button>
+<p class="mu" style="text-align:center;margin-top:16px;font-size:12px">By continuing you agree to our Terms & Privacy Policy</p></div></div>
+
+<!-- MAIN -->
+<div class="scr" id="main">
+<div class="tab on" id="t0"><div class="map" style="height:330px"><div class="hd"><div class="chip">📍 <span id="ci">Chennai</span></div><div class="av" id="av"></div></div><div id="m0" style="position:absolute;inset:0"></div></div>
+<div class="sheet"><div class="grab"></div><h2 style="margin-bottom:12px">Where to, <span id="hn"></span>?</h2>
+<select id="fm" onchange="$('fo').style.display=this.value=='other'?'flex':'none'" style="border:1.5px solid var(--bd);background:var(--sf);color:var(--tx);border-radius:20px;padding:8px 14px;font:600 13px Poppins,system-ui;margin-bottom:10px"><option value="me">For me</option><option value="other">For someone else</option></select><div id="fo" style="display:none;gap:8px;margin-bottom:10px"><input class="in" id="fn" placeholder="Rider name" style="margin:0"><input class="in" id="fp" inputmode="numeric" maxlength="10" placeholder="Mobile" style="margin:0"></div><div class="where"><div class="wr"><i class="dt"></i><input id="pk" placeholder="Pickup location" oninput="sug(this)" style="margin:0"><a class="gl" id="pl" target="_blank" rel="noopener">Maps ↗</a></div>
+<div class="wr" id="strow" style="display:none"><i class="dt" style="background:#f59e0b"></i><input id="st" placeholder="Add stop" oninput="sug(this)"><span onclick="stOff()" style="cursor:pointer">✕</span></div><div class="wr"><i class="dt r"></i><input id="dp" placeholder="Enter drop location" oninput="sug(this)" style="margin:0"><a class="gl" id="dl" target="_blank" rel="noopener">Maps ↗</a></div></div>
+<div id="sgs"></div><div style="display:flex;gap:8px;margin-top:8px"><button class="btn gh" style="margin:0;padding:10px;font-size:13px" onclick="cpOpen('dp','main')">🗺️ Choose on map</button><button class="btn gh" style="margin:0;padding:10px;font-size:13px" onclick="stOn()">➕ Add stop</button></div><button class="btn gh" style="margin-top:8px;padding:12px;font-size:14px" onclick="loc()">📡 Use current location</button>
+<div class="sp" id="hsp" onclick="spOpen()"></div>
+<div class="svc" id="svc"></div>
+<div class="sl" id="sl"><div style="background:#ffe066"><b>Get 50% off on your first 3 rides</b><small>Use code ZIPPY50</small><i>🎁</i></div><div style="background:#b8e6c9"><b>Bike rides from just ₹20</b><small>Fastest way to beat traffic</small><i>🏍️</i></div><div style="background:#c9d8ff"><b>Cab Premium for airport trips</b><small>Sedans & SUVs on demand</small><i>🚘</i></div></div>
+<div class="sec"><h2 style="font-size:16px">Available near you</h2><span class="mu">Live</span></div><div class="pl" id="nr"></div>
+<div class="sec"><h2 style="font-size:16px">Quick picks</h2></div><div class="pl" id="qp"></div></div></div>
+
+<div class="tab" id="t1"><div class="pd"><h1>Your rides</h1><div id="hist" style="margin-top:16px"></div></div></div>
+<div class="tab" id="t2"><div class="pd"><h1>Offers</h1><div style="margin-top:16px">
+<div class="sp" onclick="spOpen()"><em>NEW</em><i>🎓</i><div><b>Student Pass</b><small>25% off every bike ride · from ₹99</small></div><u>Get →</u></div>
+<div class="rc"><span class="ic">🎁</span><div><b>ZIPPY50</b><div class="mu">50% off, up to ₹50 · first 3 rides</div></div></div>
+<div class="rc"><span class="ic">🏍️</span><div><b>BIKE20</b><div class="mu">Flat ₹20 off on bike rides</div></div></div>
+<div class="rc"><span class="ic">🌙</span><div><b>NIGHT10</b><div class="mu">10% off after 10 PM</div></div></div></div></div></div>
+<div class="tab" id="t3"><div class="pd"><div class="dr"><div class="ph" style="background:var(--pd);color:#fff;font-size:24px;font-weight:700" id="pav"></div><div><h2 id="pn"></h2><div class="mu" id="pe"></div><div class="mu" id="pp"></div></div></div>
+<div class="rc" id="spc" onclick="spOpen()" style="cursor:pointer;margin-top:20px"></div>
+<div class="rc" style="flex-direction:column;align-items:flex-start"><b>🎨 App colour</b><div class="pl" id="sw"></div></div><div class="rc">💳 <b>Payments</b><span class="mu" style="margin-left:auto">Cash · UPI · Wallet</span></div><div class="rc">🛡️ <b>Safety</b><span class="mu" style="margin-left:auto">Share ride, SOS</span></div>
+<button class="btn gh" onclick="document.documentElement.dataset.theme=document.documentElement.dataset.theme=='dark'?'light':'dark'">🌓 Toggle dark mode</button><button class="btn dk" onclick="logout()">Logout</button></div></div>
+</div>
+<div id="hb" style="display:none;position:fixed;bottom:calc(66px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);width:100%;max-width:480px;z-index:8;padding:10px 18px;background:var(--bg);border-top:1px solid var(--bd);gap:10px"><button class="btn gh" style="margin:0" onclick="cpOpen('pk','main')">Confirm pickup</button><button class="btn" style="margin:0" onclick="hbBook()">Book Now</button></div>
+<div class="nav" id="nav"><div class="on" onclick="tab(0)"><span>🏠</span>Home</div><div onclick="tab(1)"><span>🧾</span>Rides</div><div onclick="tab(2)"><span>🏷️</span>Offers</div><div onclick="tab(3)"><span>👤</span>Profile</div></div>
+
+<!-- SELECT -->
+<div class="scr" id="sel"><div class="map" style="height:230px"><div id="m1" style="position:absolute;inset:0"></div><div class="hd"><button class="bk" style="background:var(--rd);color:var(--fg);box-shadow:var(--sh)" onclick="go('main')">←</button><div class="chip" id="dsum"></div></div></div>
+<div class="sheet" style="padding-bottom:20px;min-height:60vh"><div class="grab"></div><div class="mu" id="rt" style="margin-bottom:12px"></div><div style="background:#1e3a8a;color:#fff;border-radius:14px;padding:12px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-size:14px">Just select Bike!</b><span style="background:var(--pr);color:var(--on);border-radius:8px;padding:4px 10px;font-weight:700;font-size:12px;white-space:nowrap">50% OFF on 1st ride</span></div><div id="vl"></div>
+<div class="fb" id="fb"></div></div>
+<div class="fx"><div class="pay" onclick="payN()"><span id="pm">💵 Cash</span><span class="mu">Change ›</span></div>
+<div style="display:flex;gap:8px"><input class="in" id="pc" placeholder="Promo code" style="margin:0;padding:12px" oninput="fares()"><span class="mu" id="pcm" style="align-self:center;white-space:nowrap"></span></div>
+<button class="btn" id="bb" onclick="bookStart()">Book</button></div></div>
+
+<!-- SEARCH -->
+<div class="scr" id="srch"><div class="pd" style="text-align:center;padding-top:120px"><div class="rad">🔎</div><h2 style="margin-top:36px" id="sm">Finding your captain…</h2><p class="mu" style="margin-top:6px">Matching you with the nearest captain</p><button class="btn gh" style="margin-top:60px" onclick="go('main');clearTimeout(T1);clearTimeout(T2)">Cancel</button></div></div>
+
+<!-- TRACK -->
+<div class="scr" id="trk"><div class="map" style="height:280px"><div id="m2" style="position:absolute;inset:0"></div></div>
+<div class="sheet" style="padding-bottom:30px"><div class="grab"></div><div style="display:flex;justify-content:space-between;align-items:center"><h2 id="tt">Captain is on the way</h2><span class="tg" id="eta" style="font-size:12px"></span></div>
+<div class="stp" id="stp"><i class="on"></i><i></i><i></i></div>
+<div class="dr"><div class="ph" id="cph2">🧑</div><div style="flex:1"><b id="cn"></b><div class="mu" id="cv"></div><div style="font-size:13px;margin-top:2px">⭐ <b id="cr"></b></div></div><a class="chip" id="cl" style="text-decoration:none;color:var(--fg)">📞</a></div>
+<div class="mu" style="margin-top:14px;text-align:center">Share this OTP with your captain</div><div class="otp" id="ro"></div>
+<div class="rc" style="flex-direction:column;align-items:stretch;gap:6px;font-size:13px"><div id="rs"></div><div style="display:flex;justify-content:space-between;font-weight:700;font-size:15px"><span id="rp"></span><span id="rf"></span></div></div>
+<button class="btn dk" id="adv" onclick="adv()">Simulate: Captain arrived</button><button class="btn gh" id="cx" onclick="cxOpen()">Cancel ride</button></div></div>
+
+<!-- RATE -->
+<div class="scr" id="rate"><div class="pd" style="text-align:center;padding-top:60px"><div style="font-size:72px">🎉</div><h1>You've arrived!</h1><p class="mu" style="margin-top:6px" id="rm"></p>
+<div class="rc" style="justify-content:space-between;margin-top:20px"><b>Total fare</b><b style="font-size:22px" id="rt2"></b></div><h2 style="margin-top:20px;font-size:16px">Rate your captain</h2>
+<div class="st" id="stars"></div><div class="pl" style="justify-content:center" id="tips"></div><button class="btn" onclick="fin()">Submit</button></div></div>
+
+<!-- CONFIRM PICKUP MAP -->
+<div class="scr" id="cpk"><div class="map" style="height:66vh"><div id="m3" style="position:absolute;inset:0"></div><div class="hd"><button class="bk" style="background:var(--rd);color:var(--fg);box-shadow:var(--sh)" onclick="go(cpBack=='book'?'sel':'main')">←</button></div><div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-100%);z-index:1000;text-align:center;pointer-events:none"><div class="chip" style="background:#12a150;color:#fff;margin-bottom:4px" id="cpl">Pickup Point</div><div style="font-size:36px;line-height:1">📍</div></div></div>
+<div style="position:relative;margin-top:-24px;z-index:1002;background:var(--bg);border-radius:24px 24px 0 0;padding:18px"><h2 id="cpt">Check your pickup point</h2><div class="mu">Move the map to select a nearby point for easier pickup</div><div style="border:2px solid var(--ok);border-radius:14px;padding:12px;margin:12px 0;font-weight:600;font-size:14px" id="cpa">Locating…</div><button class="btn" onclick="cpOk()">Confirm pickup</button></div></div>
+
+<!-- CANCEL RIDE -->
+<div id="cxm" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:flex-end;justify-content:center"><div style="background:var(--bg);color:var(--tx);width:100%;max-width:480px;border-radius:24px 24px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom,0px))"><h2>Cancel ride?</h2><div class="mu" id="cxf" style="margin:6px 0 12px"></div><div class="pl" id="cxr" style="margin-bottom:6px"></div><button class="btn dk" onclick="cxDo()">Confirm cancel</button><button class="btn gh" onclick="cxClose()">Keep ride</button></div></div>
+
+<!-- SET PRICE -->
+<div id="prm" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:flex-end;justify-content:center"><div style="background:var(--bg);color:var(--tx);width:100%;max-width:480px;border-radius:24px 24px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom,0px))"><h2 style="text-align:center">Now you can set a price that works for you</h2><div style="text-align:center;font-size:34px;font-weight:800;background:var(--sf);border-radius:14px;padding:14px;margin:12px 0" id="prv"></div><div class="mu" style="text-align:center">💡 Higher the price, higher the chance of getting a ride</div><div class="pl" id="prc" style="justify-content:center;margin:12px 0"></div><button class="btn" id="prb" onclick="prGo()"></button></div></div>
+
+<!-- STUDENT PASS -->
+<div id="spm" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:flex-end;justify-content:center"><div style="background:var(--bg);color:var(--tx);width:100%;max-width:480px;max-height:90vh;overflow:auto;border-radius:24px 24px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom,0px))"><h2>🎓 ZippyGo Student Pass</h2><div class="mu" style="margin:6px 0 12px">25% off every Bike, Bike Pink & Scooty ride (max ₹30 off per ride)</div><div id="spp"></div><div id="spf"><input class="in" id="spcn" placeholder="College name"><input class="in" id="spid" placeholder="Student ID number"><div class="err" id="sperr"></div><button class="btn" id="spb" onclick="spBuy()"></button></div><button class="btn gh" onclick="spClose()">Close</button></div></div>
+
+<script>
+const tf=(u,ms)=>{const c=new AbortController();setTimeout(()=>c.abort(),ms||6000);return fetch(u,{signal:c.signal})};
+window.onerror=(m)=>{try{alert('Error: '+m)}catch(e){}};
+const fa=r=>{const a=r.address||{},p=[r.name&&r.name!=a.road?r.name:'',a.house_number,a.road,a.neighbourhood||a.suburb,a.city_district,a.city||a.town||a.village,a.state,a.postcode].filter((x,i,ar)=>x&&ar.indexOf(x)==i);return p.length>2?p.join(', '):r.display_name};
+const S={},M={},MK={};let F='dp';
+const $=id=>document.getElementById(id);
+const show=id=>{document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));$(id).classList.add('on')};
+const ld=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
+const sv=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const gm=q=>'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(q||'Chennai');
+const gmc=p=>'https://www.google.com/maps/search/?api=1&query='+p.lat+','+p.lng;
+const ico=h=>L.divIcon({html:h,className:'',iconSize:null});
+const pinI=e=>ico('<div style="font-size:30px;line-height:1;transform:translate(-50%,-100%)">'+e+'</div>');
+const vI=e=>ico('<div class="mk" style="position:static;transform:translate(-50%,-50%);transition:none;width:28px;height:28px;font-size:15px">'+e+'</div>');
+function mkMap(id,c){if(typeof L==='undefined'){$(id).innerHTML='<div class="pd mu">Map needs internet. Open this file in Chrome with internet on.</div>';return null}
+ if(M[id]){M[id].invalidateSize();return M[id]}
+ const m=L.map(id,{zoomControl:false,attributionControl:false}).setView(c||[13.0827,80.2707],15);
+ const dk=(document.documentElement.dataset.theme=='dark'||(document.documentElement.dataset.theme!='light'&&matchMedia('(prefers-color-scheme:dark)').matches));
+ L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/'+(dk?'dark_all':'voyager')+'/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:20,attribution:''}).addTo(m);return M[id]=m}
+function initHome(){near();HM=mkMap('m0');if(!HM||inited)return;inited=1;
+ HM.on('click',e=>setPt(!S.pk?'pk':F,{lat:e.latlng.lat,lng:e.latlng.lng},1));fleet({lat:13.0827,lng:80.2707});loc(1)}
+async function rgeo(p){try{const r=await(await tf('https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=18&addressdetails=1&lat='+p.lat+'&lon='+p.lng)).json();const a=r.address||{};$('ci').textContent=a.suburb||a.city_district||a.city||a.town||'Nearby';return fa(r)}catch(e){return null}}
+async function gsearch(q){const u=t=>'https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=6&countrycodes=in&q='+encodeURIComponent(t);
+ const w=q.replace(/\s+/g,' ').split(' '),vs=[q];
+ const x=w.filter((t,i)=>!(i<3&&/\d/.test(t))&&!/^(no\.?|door|#)$/i.test(t)).join(' ');if(x&&x!=q)vs.push(x);
+ for(let i=1;i<3&&w.length-i>2;i++)vs.push(w.slice(i).join(' '));
+ for(const v of vs){try{const r=await(await tf(u(v),9000)).json();if(r.length)return{r,ap:v!=q}}catch(e){return{r:[],er:1}}await new Promise(k=>setTimeout(k,1100))}return{r:[]}}
+function sug(el){F=el.id;delete S[F];if(HM&&MK[F]){HM.removeLayer(MK[F]);delete MK[F]}links();clearTimeout(gt);const q=el.value.trim();if(q.length<3){$('sgs').innerHTML='';return}
+ const msg=t=>'<div class="mu" style="padding:10px">'+t+'</div>';$('sgs').innerHTML=msg('Searching address…');
+ gt=setTimeout(async()=>{const o=await gsearch(q);if(el.value.trim()!=q)return;
+ if(o.er)return $('sgs').innerHTML=msg('Address search needs internet. Please check connection.');
+ if(!o.r.length)return $('sgs').innerHTML=msg('No exact match. Tap on the map to drop a pin at your exact spot 📍');
+ window.SG=o.r.map(r=>({lat:+r.lat,lng:+r.lon,full:fa(r),name:o.ap?q+' ('+fa(r).split(', ').slice(0,3).join(', ')+')':fa(r)}));
+ $('sgs').innerHTML=(o.ap?msg('Exact house no. is not on the map, showing the nearest road/area. Tap the map to fine-tune.'):'')+SG.map((s,i)=>'<div class="sg" onclick="pS('+i+')">📍<div><b>'+s.full.split(', ').slice(0,2).join(', ')+'</b><div class="mu">'+s.full+'</div></div></div>').join('')},700)}
+function pS(i){setPt(F,{...SG[i]},0)}
+async function setPt(id,p,rev,quiet){S[id]=p;if(rev){$(id).value='Locating address…';p.name=await rgeo(p)||(p.lat.toFixed(5)+', '+p.lng.toFixed(5))}
+ $(id).value=p.name;$('sgs').innerHTML='';mark(id);links();if(id=='pk')fleet(p)}
+function mark(id){if(!HM)return;if(MK[id])HM.removeLayer(MK[id]);MK[id]=L.marker([S[id].lat,S[id].lng],{icon:pinI(id=='pk'?'📍':id=='st'?'🛑':'🏁')}).addTo(HM);
+ const b=[S.pk,S.st,S.dp].filter(Boolean).map(p=>[p.lat,p.lng]);b.length>1?HM.fitBounds(b,{padding:[60,60]}):HM.setView(b[0],16)}
+function links(){$('pl').href=S.pk?gmc(S.pk):gm($('pk').value);$('dl').href=S.dp?gmc(S.dp):gm($('dp').value)}
+function upd(){links()}
+function loc(q){if(!navigator.geolocation){if(!q)alert('Location not available');return}
+ navigator.geolocation.getCurrentPosition(pos=>{const p={lat:pos.coords.latitude,lng:pos.coords.longitude};
+ if(HM){HM.setView([p.lat,p.lng],16);L.circleMarker([p.lat,p.lng],{radius:8,color:'#fff',weight:3,fillColor:'#2563eb',fillOpacity:1}).addTo(HM)}setPt('pk',p,1,1)},
+ ()=>{if(!q)alert('Please allow location permission in your browser')},{enableHighAccuracy:true,timeout:10000})}
+function fleet(c){if(!HM)return;fl.forEach(f=>HM.removeLayer(f));fl=[];V.forEach(v=>{for(let i=0;i<Math.min(v.c,3);i++)fl.push(L.marker([c.lat+(Math.random()-.5)*.012,c.lng+(Math.random()-.5)*.012],{icon:vI(v.i),interactive:false}).addTo(HM))})}
+setInterval(()=>fl.forEach(m=>{const p=m.getLatLng();m.setLatLng([p.lat+(Math.random()-.5)*.0004,p.lng+(Math.random()-.5)*.0004])}),2000);
+function near(){const c=V.map(v=>({...v,c:Math.max(1,v.c+Math.floor(Math.random()*5-2))}));$('nr').innerHTML=c.map(v=>'<span>'+v.i+' <b>'+v.c+'</b> '+v.n+'</span>').join('')}
+setInterval(()=>{if($('t0').classList.contains('on')&&$('main').classList.contains('on'))near()},5000);
+const hv=(a,b)=>{const r=Math.PI/180;return 6371*Math.hypot((b.lat-a.lat)*r,(b.lng-a.lng)*r*Math.cos(a.lat*r))};
+async function route(a,b){try{const r=await(await tf('https://router.project-osrm.org/route/v1/driving/'+a.lng+','+a.lat+';'+b.lng+','+b.lat+'?overview=full&geometries=geojson')).json();const t=r.routes[0];return{c:t.geometry.coordinates.map(x=>[x[1],x[0]]),km:t.distance/1000,min:Math.max(2,Math.round(t.duration/60))}}
+ catch(e){const k=hv(a,b)*1.3;return{c:[[a.lat,a.lng],[b.lat,b.lng]],km:k,min:Math.max(2,Math.round(k*3))}}}
+async function route2(a,m,b){const x=await route(a,m),y=await route(m,b);return{c:x.c.concat(y.c),km:x.km+y.km,min:x.min+y.min}}
+function stOn(){$('strow').style.display='flex';F='st';setTimeout(()=>$('st').focus(),50)}
+function stOff(){$('strow').style.display='none';$('st').value='';delete S.st;if(HM&&MK.st){HM.removeLayer(MK.st);delete MK.st}}
+const rc=()=>ld('zg_rec')||[];
+function saveRec(p){if(!p||!p.name)return;const o=rc().find(x=>x.name==p.name),r=rc().filter(x=>x.name!=p.name);r.unshift({lat:p.lat,lng:p.lng,name:p.name,fav:o&&o.fav});sv('zg_rec',r.slice(0,10))}
+function recents(el){if(el.value)return;F=el.id;window.RC=rc().sort((a,b)=>(b.fav?1:0)-(a.fav?1:0));if(!RC.length){$('sgs').innerHTML='';return}
+ $('sgs').innerHTML=RC.map((x,i)=>'<div class="sg" onclick="pR('+i+')"><span>🕒</span><div style="flex:1;min-width:0"><b>'+x.name.split(', ').slice(0,2).join(', ')+'</b><div class="mu" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+x.name+'</div></div><div class="mu">'+(S.pk&&F!='pk'?hv(S.pk,x).toFixed(1)+' km':'')+'</div><span onclick="fv('+i+',event)">'+(x.fav?'❤️':'🤍')+'</span></div>').join('')}
+function pR(i){setPt(F,{...RC[i]},0)}
+function fv(i,e){e.stopPropagation();const r=rc(),o=r.find(y=>y.name==RC[i].name);if(o)o.fav=!o.fav;sv('zg_rec',r);recents($(F))}
+const V=[{id:'bike',n:'Bike',i:'🏍️',s:1,b:15,k:6,t:4,c:9,d:'Fastest'},{id:'pink',n:'Bike Pink',i:'🏍️',s:1,b:18,k:6.5,t:4,c:3,d:'Women captains'},{id:'scooty',n:'Scooty',i:'🛵',s:1,b:16,k:6,t:6,c:5,d:'Affordable'},{id:'auto',n:'Auto',i:'🛺',s:3,b:28,k:11,t:3,c:6,d:'Hassle-free auto rides'},{id:'autop',n:'Auto Priority',i:'🛺',s:3,b:38,k:13,t:2,c:4,d:'Priority pickup',tag:'Quickest'},{id:'cab',n:'Cab Economy',i:'🚕',s:4,b:45,k:14,t:5,c:7,d:'Comfy hatchbacks'},{id:'prem',n:'Cab Premium',i:'🚘',s:4,b:75,k:20,t:6,c:3,d:'Top rated sedans'}];
+const PL=['Anna Nagar','T. Nagar','Velachery','Adyar','Guindy','Chennai Central','Egmore','OMR Sify Tower','Koyambedu Bus Stand','Marina Beach','Tambaram','Chennai Airport','Besant Nagar','Porur'];
+const CAP=['Murugan','Karthik','Selvam','Ravi Kumar','Suresh','Arun'],PAY=['💵 Cash','📱 UPI','👛 ZippyGo Wallet'];
+let U=null,otp='',sel='bike',ride=null,stage=0,dist=0,pi=0,ob=0,star=5,T1,T2,disc=0,inited=0,fl=[],gt,AN=0,G1,G2,HM;
+const dT=x=>new Date(Date.now()+(x.t+(R?R.min:10))*60000).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
+let R=null,DRV=null,DM=null;
+const go=id=>{document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));$(id).classList.add('on');$('nav').classList.toggle('on',id=='main');window.scrollTo(0,0);setTimeout(()=>{for(const k in M)M[k].invalidateSize()},80)};
+const tab=n=>{document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('on',i==n));document.querySelectorAll('.nav div').forEach((t,i)=>t.classList.toggle('on',i==n));if(n==1)hist();if(n==0)setTimeout(()=>M.m0&&M.m0.invalidateSize(),80);window.scrollTo(0,0)};
+setTimeout(()=>{$('splash').classList.remove('on');U=ld('zg_user');U?enter():go('onb')},2200);
+$('obs').addEventListener('scroll',e=>{ob=Math.round(e.target.scrollLeft/e.target.clientWidth);dots()});
+function dots(){[...$('od').children].forEach((d,i)=>d.classList.toggle('on',i==ob));$('obn').textContent=ob==2?'Get Started':'Next'}
+function obNext(){if(ob>=2)return go('login');ob++;$('obs').scrollTo({left:ob*$('obs').clientWidth,behavior:'smooth'});dots()}
+function sendOtp(){
+ const n=$('nm').value.trim()||(U&&U.n||''),e=$('em').value.trim()||(U&&U.e||''),p=$('ph').value.trim()||(U&&U.p||'');
+ if(n.length<2)return $('err').textContent='Please enter your name';
+ if(!/^\S+@\S+\.\S+$/.test(e))return $('err').textContent='Enter a valid email address';
+ if(!/^[6-9]\d{9}$/.test(p))return $('err').textContent='Enter a valid 10-digit mobile number';
+ $('err').textContent='';U={n,e,p};sv('zg_user',U);enter()}
+let SPP=1;const SPL=[{d:7,p:99,n:'Weekly'},{d:30,p:299,n:'Monthly'}];
+const pass=()=>{const p=ld('zg_pass');return p&&p.exp>Date.now()?p:null};
+const dl=P=>Math.ceil((P.exp-Date.now())/864e5);
+function spOpen(){$('spm').style.display='flex';spR()}
+function spClose(){$('spm').style.display='none'}
+function spR(){const P=pass();$('spf').style.display=P?'none':'block';
+ if(P){$('spp').innerHTML='<div class="rc"><span class="ic">✅</span><div><b>Pass active · '+P.n+'</b><div class="mu">'+P.col+' · '+dl(P)+' days left</div></div></div>';return}
+ $('spp').innerHTML=SPL.map((x,i)=>'<div class="vc '+(SPP==i?'on':'')+'" onclick="SPP='+i+';spR()"><div class="ic">🎓</div><div class="m"><b>'+x.n+' · '+x.d+' days</b><div class="mu">Discount on every bike ride</div></div><div class="p">₹'+x.p+'</div></div>').join('');
+ $('spb').textContent='Activate pass · ₹'+SPL[SPP].p+' (demo pay)'}
+function spBuy(){const c=$('spcn').value.trim(),i=$('spid').value.trim();
+ if(c.length<3)return $('sperr').textContent='Enter your college name';
+ if(i.length<4)return $('sperr').textContent='Enter your student ID number';
+ $('sperr').textContent='';const x=SPL[SPP];sv('zg_pass',{n:x.n,exp:Date.now()+x.d*864e5,col:c});spRender();spR()}
+function spRender(){const P=pass();$('hsp').innerHTML=P?'<i>🎓</i><div><b>Student Pass active ✅</b><small>'+dl(P)+' days left · 25% off every bike ride</small></div>':'<em>NEW</em><i>🎓</i><div><b>Student Pass</b><small>25% off every bike ride · from ₹99/week</small></div><u>Get →</u>';$('spc').innerHTML=P?'<span class="ic">🎓</span><div><b>Student Pass active</b><div class="mu">'+dl(P)+' days left · 25% off bikes</div></div>':'<span class="ic">🎓</span><div><b>Get Student Pass</b><div class="mu">25% off bike rides · from ₹99</div></div>'}
+function logout(){try{localStorage.removeItem('zg_user')}catch(e){}U=null;go('login')}
+function enter(){spRender();const i=U.n[0].toUpperCase();$('av').textContent=i;$('pav').textContent=i;$('hn').textContent=U.n.split(' ')[0];$('pn').textContent=U.n;$('pe').textContent=U.e;$('pp').textContent='+91 '+U.p;
+ $('svc').innerHTML=V.slice(0,3).map((s,k)=>'<div class="'+(s.id==sel?'on':'')+'" onclick="sel=\''+s.id+'\';enter2()"><span>'+s.i+'</span>'+s.n+'</div>').join('');
+ $('qp').innerHTML=PL.slice(0,6).map(p=>'<span onclick="$(\'dp\').value=\''+p+'\';upd()">📍 '+p+'</span>').join('');go('main');tab(0);initHome()}
+function enter2(){enter()}
+function upd(){links();const d=$('dp');if(d.value&&!S.dp)sug(d)}
+function fare(v){return Math.round((v.b+v.k*dist)*1.05)}
+function fares(){const c=$('pc').value.trim().toUpperCase();disc=0;$('pcm').textContent='';
+ const v=V.find(x=>x.id==sel);let f=fare(v);
+ if(c=='ZIPPY50'){disc=Math.min(50,Math.round(f*.5))}else if(c=='BIKE20'&&sel=='bike'){disc=20}else if(c=='NIGHT10'){disc=Math.round(f*.1)}else if(c)$('pcm').textContent='Invalid code';
+ const P=pass();if(P&&v.s==1){const d=Math.min(30,Math.round(f*.25));if(d>disc){disc=d;$('pcm').textContent='🎓 Pass −₹'+d}}
+ if(disc&&!$('pcm').textContent)$('pcm').textContent='✓ −₹'+disc;
+ $('vl').innerHTML=V.map((x,i)=>{const p=fare(x);return '<div class="vc '+(sel==x.id?'on':'')+'" onclick="sel=\''+x.id+'\';fares()"><div class="ic">'+x.i+'</div><div class="m"><b>'+x.n+'</b>'+(x.tag?'<span class="tg">'+x.tag+'</span>':'')+'<div class="mu">'+x.t+' mins · Drop '+dT(x)+'</div><div class="mu">👤 '+x.s+' · '+x.d+'</div></div><div class="p">₹'+(sel==x.id?p-disc:p)+'<s>₹'+(sel==x.id&&disc?p:Math.round(p*1.12))+'</s></div></div>'}).join('');
+ const b=Math.round(v.b),d=Math.round(v.k*dist),t=Math.round((b+d)*.05);
+ $('fb').innerHTML='<div><span>Base fare</span><span>₹'+b+'</span></div><div><span>Distance ('+dist.toFixed(1)+' km)</span><span>₹'+d+'</span></div><div><span>Taxes & fees</span><span>₹'+t+'</span></div>'+(disc?'<div style="color:var(--ok)"><span>Promo discount</span><span>−₹'+disc+'</span></div>':'')+'<div style="font-weight:700;color:var(--tx)"><span>Total</span><span>₹'+(f-disc)+'</span></div>';
+ $('bb').textContent='Book '+v.n+' · ₹'+(f-disc)}
+function payN(){pi=(pi+1)%3;$('pm').textContent=PAY[pi]}
+async function bookStart(){try{if(!S.pk||!S.dp)return alert('Please select pickup and drop locations first');
+ if($('fm').value=='other'&&($('fn').value.trim().length<2||!/^[6-9]\d{9}$/.test($('fp').value.trim())))return alert("Enter the rider's name and a valid 10-digit mobile number");cpOpen('pk','book')}catch(e){alert('Booking error: '+(e&&e.message||e));go('sel')}}
+async function book0(){const v=V.find(x=>x.id==sel),f=fare(v)-disc+PB,i=Math.floor(Math.random()*6),Lt=()=>String.fromCharCode(65+Math.random()*26|0),a=S.pk,ang=Math.random()*6.28,dd=.009+Math.random()*.006;
+ const st={lat:a.lat+Math.sin(ang)*dd,lng:a.lng+Math.cos(ang)*dd};
+ ride={a:a.name,b:S.dp.name,v:v.n,ic:v.i,f,d:dist.toFixed(1),cn:CAP[i],cr:(4.3+Math.random()*.6).toFixed(1),cph:'9'+Math.floor(100000000+Math.random()*899999999),pl:'TN '+(10+Math.floor(Math.random()*80))+' '+Lt()+Lt()+' '+(1000+Math.floor(Math.random()*8999)),otp:String(Math.floor(1000+Math.random()*9000)),pay:PAY[pi],t:Date.now(),who:$('fm').value=='other'?$('fn').value.trim():'Me'};
+ go('srch');$('sm').textContent='Finding your captain…';T1=setTimeout(()=>$('sm').textContent='Captain found! 🎉',1600);
+ const DR=await route(st,a);await new Promise(r=>{T2=setTimeout(r,2700)});if(!$('srch').classList.contains('on'))return;track(DR)}
+async function openSel(){if(!S.pk||!S.dp)return;go('sel');$('vl').innerHTML='<div class="sk"></div>'.repeat(4);$('fb').innerHTML='';
+ const a=S.pk,b=S.dp;$('rt').innerHTML='🟢 '+a.name+' <a class="gl" target="_blank" rel="noopener" href="'+gmc(a)+'">map ↗</a>';if(S.st)$('rt').innerHTML+='<br>🟠 Stop: '+S.st.name;$('rt').innerHTML+='<br>🔴 '+b.name+' <a class="gl" target="_blank" rel="noopener" href="'+gmc(b)+'">map ↗</a>';
+ R=S.st?await route2(a,S.st,b):await route(a,b);dist=R.km;$('dsum').textContent=dist.toFixed(1)+' km · '+R.min+' min';
+ const m=mkMap('m1');if(m){if(G1)G1.remove();G1=L.layerGroup([L.polyline(R.c,{color:'#111',weight:5}),L.marker([a.lat,a.lng],{icon:pinI('📍')}),L.marker([b.lat,b.lng],{icon:pinI('🏁')}),...(S.st?[L.marker([S.st.lat,S.st.lng],{icon:pinI('🛑')})]:[])]).addTo(m);m.fitBounds(R.c,{padding:[40,40]})}
+ fares()}
+function bookStart(){if(!S.pk){return alert('Please select pickup location')}if(!S.dp){alert('Please enter your drop location');$('dp').focus();return}openSel()}
+async function book(){await book0()}
+function track(DR){stage=0;DRV=DR;go('trk');$('tt').textContent='Captain is on the way';$('eta').textContent='Arriving in '+DR.min+' min';
+ $('cn').textContent=ride.cn;$('cv').textContent=ride.ic+' '+ride.v+' · '+ride.pl;$('cr').textContent=ride.cr;$('cl').href='tel:+91'+ride.cph;
+ $('ro').innerHTML=[...ride.otp].map(d=>'<b>'+d+'</b>').join('');
+ $('rs').innerHTML='🟢 '+ride.a+' <a class="gl" target="_blank" rel="noopener" href="'+gmc(S.pk)+'">map ↗</a><br>🔴 '+ride.b+' <a class="gl" target="_blank" rel="noopener" href="'+gmc(S.dp)+'">map ↗</a>';
+ $('rp').textContent=ride.pay+' · '+ride.d+' km'+(ride.who!='Me'?' · For '+ride.who:'');$('rf').textContent='₹'+ride.f;$('cx').style.display='';$('adv').textContent='Simulate: Captain arrived';
+ const m=mkMap('m2'),a=S.pk,b=S.dp;DM=null;
+ if(m)try{if(G2)G2.remove();DM=L.marker(DR.c[0],{icon:vI(ride.ic)});G2=L.layerGroup([L.polyline(R.c,{color:'#111',weight:5,opacity:.8}),L.polyline(DR.c,{color:'#2563eb',weight:4,dashArray:'6 8'}),L.marker([a.lat,a.lng],{icon:pinI('📍')}),L.marker([b.lat,b.lng],{icon:pinI('🏁')}),DM]).addTo(m);m.fitBounds(DR.c.concat(R.c),{padding:[40,40]});
+ anim(DM,DR.c,Math.max(12000,DR.min*4000),p=>{$('eta').textContent='Arriving in '+Math.max(1,Math.ceil(DR.min*(1-p)))+' min'},arrive)}catch(e){console.log(e)}
+ steps()}
+function anim(mk,c,ms,onp,done){cancelAnimationFrame(AN);if(!c||c.length<2){done&&done();return}
+ const d=[0];for(let i=1;i<c.length;i++)d.push(d[i-1]+Math.hypot(c[i][0]-c[i-1][0],c[i][1]-c[i-1][1]));const T=d[d.length-1],t0=performance.now();
+ const f=n=>{const p=Math.min(1,(n-t0)/ms),x=p*T;let i=1;while(i<d.length-1&&d[i]<x)i++;const s=(x-d[i-1])/((d[i]-d[i-1])||1),a=c[i-1],b=c[i];mk.setLatLng([a[0]+(b[0]-a[0])*s,a[1]+(b[1]-a[1])*s]);onp&&onp(p);if(p<1)AN=requestAnimationFrame(f);else done&&done()};AN=requestAnimationFrame(f)}
+function steps(){[...$('stp').children].forEach((s,i)=>s.classList.toggle('on',i<=stage))}
+function arrive(){if(stage>0)return;stage=1;cancelAnimationFrame(AN);if(DM&&DRV)DM.setLatLng(DRV.c[DRV.c.length-1]);$('tt').textContent='Captain has arrived';$('eta').textContent='At pickup';$('adv').textContent='Simulate: Start ride';steps()}
+function adv(){
+ if(stage==0)return arrive();
+ if(stage==1){stage=2;$('tt').textContent='Enjoy your ride';$('eta').textContent='On trip';$('cx').style.display='none';$('adv').textContent='Simulate: End ride';
+  if(DM)anim(DM,R.c,Math.max(20000,R.min*5000),p=>{$('eta').textContent=Math.max(1,Math.ceil(R.min*(1-p)))+' min to drop';if(M.m2&&Math.random()<.03)M.m2.panTo(DM.getLatLng())},endRide);steps()}
+ else endRide()}
+function endRide(){if(stage!=2)return;stage=3;cancelAnimationFrame(AN);steps();$('rm').textContent=ride.a+' → '+ride.b+' · '+ride.d+' km';$('rt2').textContent='₹'+ride.f;star=5;stars();$('tips').innerHTML=['₹10','₹20','₹50'].map(t=>'<span onclick="this.classList.toggle(\'on\')" style="cursor:pointer">'+t+' tip</span>').join('');go('rate')}
+function stars(){$('stars').innerHTML=[1,2,3,4,5].map(i=>'<span class="'+(i<=star?'on':'')+'" onclick="star='+i+';stars()">⭐</span>').join('')}
+function fin(){const h=ld('zg_h')||[];h.unshift({a:ride.a,b:ride.b,v:ride.v,ic:ride.ic,f:ride.f,d:new Date().toLocaleDateString()});sv('zg_h',h);$('dp').value='';$('pc').value='';delete S.dp;stOff();if(HM&&MK.dp){HM.removeLayer(MK.dp);delete MK.dp}enter()}
+function hist(){const h=ld('zg_h')||[];$('hist').innerHTML=h.length?h.slice(0,10).map(r=>'<div class="rc"><span class="ic">'+r.ic+'</span><div style="flex:1"><b>'+r.b+'</b><div class="mu">from '+r.a+' · '+r.d+'</div></div><b>'+(r.x?'Cancelled · ₹'+r.f:'₹'+r.f)+'</b></div>').join(''):'<div class="mu">No rides yet — book your first ride!</div>'}
+setInterval(()=>{const s=$('sl');if(!s||!$('t0').classList.contains('on'))return;const w=s.firstElementChild.offsetWidth+12;s.scrollTo({left:s.scrollLeft+w>s.scrollWidth-s.clientWidth+4?0:s.scrollLeft+w,behavior:'smooth'})},3500);
+function editLoc(id){go('main');tab(0);const el=$(id);delete S[id];if(HM&&MK[id]){HM.removeLayer(MK[id]);delete MK[id]}el.value='';F=id;links();setTimeout(()=>el.focus(),150)}
+['pk','dp','st'].forEach(i=>$(i).addEventListener('focus',e=>{F=i;e.target.select();if(!e.target.value)recents(e.target)}));
+const TH={Purple:['#7c3aed','#fff'],Green:['#16a34a','#fff'],Blue:['#2563eb','#fff'],Orange:['#ff6a00','#fff'],Red:['#e5484d','#fff'],Yellow:['#ffc800','#111'],Black:['#111318','#fff']};
+function sw(){$('sw').innerHTML=Object.keys(TH).map(n=>'<span onclick="setTh(\''+n+'\')" style="cursor:pointer;background:'+TH[n][0]+';color:'+TH[n][1]+';'+((ld('zg_th')||'Purple')==n?'outline:3px solid var(--tx);':'')+'">'+n+'</span>').join('')}
+function setTh(n){const t=TH[n]||TH.Purple,r=document.documentElement.style;r.setProperty('--pr',t[0]);r.setProperty('--on',t[1]);sv('zg_th',n);sw()}
+setTh(ld('zg_th')||'Purple');
+let cxR='';
+function cxOpen(){cxR='';const free=stage==0&&(Date.now()-ride.t)<120000;ride.fee=stage==0?(free?0:10):20;
+$('cxf').textContent=ride.fee?'A cancellation fee of ₹'+ride.fee+' applies because your captain has '+(stage?'already arrived':'been on the way for a while')+'.':'Free cancellation, no charge.';
+$('cxr').innerHTML=['Changed my plans','Captain is too far','Wrong pickup location','Booked by mistake','Found another ride'].map(t=>'<span style="cursor:pointer" onclick="cxR=this.textContent;document.querySelectorAll(\'#cxr span\').forEach(x=>x.style.outline=\'\');this.style.outline=\'2px solid var(--pr)\'">'+t+'</span>').join('');$('cxm').style.display='flex'}
+function cxClose(){$('cxm').style.display='none'}
+function cxDo(){if(!cxR)return alert('Please select a reason');cancelAnimationFrame(AN);stage=9;cxClose();const h=ld('zg_h')||[];h.unshift({a:ride.a,b:ride.b,v:ride.v,ic:ride.ic,f:ride.fee,d:new Date().toLocaleDateString(),x:1});sv('zg_h',h);
+alert('Ride cancelled'+(ride.fee?'. Fee ₹'+ride.fee+' will be charged.':'. No charge.'));$('dp').value='';delete S.dp;stOff();if(HM&&MK.dp){HM.removeLayer(MK.dp);delete MK.dp}enter()}
+let PB=0,cpM=null,cpMode='pk',cpBack='sel',cpT;
+function stOn(){$('strow').style.display='flex';F='st';setTimeout(()=>$('st').focus(),50)}
+function stOff(){$('strow').style.display='none';$('st').value='';delete S.st;if(HM&&MK.st){HM.removeLayer(MK.st);delete MK.st}}
+function saveRec(p){if(!p||!p.name)return;const o=rc().find(x=>x.name==p.name),r=rc().filter(x=>x.name!=p.name);r.unshift({lat:p.lat,lng:p.lng,name:p.name,fav:o&&o.fav});sv('zg_rec',r.slice(0,10))}
+function bookStart(){if(!S.pk||!S.dp)return alert('Please select pickup and drop locations first');
+ if($('fm').value=='other'&&($('fn').value.trim().length<2||!/^[6-9]\d{9}$/.test($('fp').value.trim())))return alert("Enter the rider's name and a valid 10-digit mobile number");cpOpen('pk','book')}
+function cpOpen(id,back){cpMode=id;cpBack=back;go('cpk');$('cpt').textContent=id=='pk'?'Check your pickup point':'Set your drop point';$('cpl').textContent=id=='pk'?'Pickup Point':'Drop Point';
+ const c=S[id]||S.pk||{lat:13.0827,lng:80.2707};cpM=mkMap('m3',[c.lat,c.lng]);$('cpa').dataset.n=c.name||'';$('cpa').textContent=c.name||'Locating…';if(!cpM)return;
+ if(!cpM._h){cpM._h=1;cpM.on('moveend',()=>{clearTimeout(cpT);$('cpa').textContent='Locating…';cpT=setTimeout(async()=>{const p=cpM.getCenter(),n=await rgeo({lat:p.lat,lng:p.lng});$('cpa').textContent=n||'Selected point';$('cpa').dataset.n=n||''},600)})}
+ cpM.setView([c.lat,c.lng],18)}
+async function cpOk(){if(!cpM)return;const p=cpM.getCenter(),n=$('cpa').dataset.n||$('cpa').textContent;
+ if(cpBack=='book'){S.pk={lat:p.lat,lng:p.lng,name:n};$('pk').value=n;mark('pk');await openSel();prOpen();return}
+ await setPt(cpMode,{lat:p.lat,lng:p.lng,name:n},0);go('main')}
+function prOpen(){PB=0;prR();$('prm').style.display='flex'}
+function prR(){const v=V.find(x=>x.id==sel),b=fare(v)-disc;$('prv').textContent='₹'+(b+PB);$('prc').innerHTML=[-10,0,50,100,150,200].map(n=>'<span style="cursor:pointer;'+(n==PB?'outline:2px solid var(--pr);font-weight:700':'')+'" onclick="PB='+n+';prR()">'+(n>0?'+'+n:n)+'</span>').join('');$('prb').textContent='Book '+v.n+' for ₹'+(b+PB)}
+function prGo(){$('prm').style.display='none';book()}
+function showHb(){$('hb').style.display=(S.pk&&$('main').classList.contains('on')&&$('t0').classList.contains('on'))?'flex':'none'}
+setInterval(showHb,300);
+function hbBook(){if(!S.pk){return alert('Please select pickup location')}if(!S.dp){alert('Please enter your drop location');$('dp').focus();return}openSel()}
+</script></body></html>
